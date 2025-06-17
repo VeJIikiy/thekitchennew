@@ -1,34 +1,21 @@
-# config.py
-TOKEN = '8022174272:AAG1aSjbl9VKA3XaWlerOOABE_qH4bhHiwk' # ВАШ ТОКЕН
-ADMIN_GROUP_ID = -1002585299388 # ВАШ ID ГРУППЫ АДМИНОВ
+import os
+from dotenv import load_dotenv
 
-# --- ИЗМЕНЕННОЕ РАСПИСАНИЕ РАБОТЫ КАФЕ ---
+load_dotenv()
+
+TOKEN = os.getenv('TOKEN')
+ADMIN_GROUP_ID = int(os.getenv('ADMIN_GROUP_ID'))
+SPREADSHEET_ID = os.getenv('SPREADSHEET_ID')
+
 CAFE_SCHEDULE = {
-    'weekdays': {'open': '08:00', 'close': '20:00'},  # Понедельник - Пятница
-    'saturday': {'open': '08:00', 'close': '20:00'},  # Суббота
-    'sunday': {'open': '08:00', 'close': '20:00'}   # Воскресенье
+    'weekdays': {'open': '08:00', 'close': '20:00'},
+    'saturday': {'open': '08:00', 'close': '20:00'},
+    'sunday': {'open': '08:00', 'close': '20:00'}
 }
-# Если вы хотите, чтобы это было еще проще, и все дни недели одинаковы, можно так:
-# CAFE_SCHEDULE = {
-#     0: {'open': '09:00', 'close': '20:00'}, # Понедельник
-#     1: {'open': '09:00', 'close': '20:00'}, # Вторник
-#     2: {'open': '09:00', 'close': '20:00'}, # Среда
-#     3: {'open': '09:00', 'close': '20:00'}, # Четверг
-#     4: {'open': '09:00', 'close': '20:00'}, # Пятница
-#     5: {'open': '09:00', 'close': '20:00'}, # Суббота
-#     6: {'open': '09:00', 'close': '20:00'}  # Воскресенье
-# }
-# Или даже так, если ваш utils.py сможет это обработать (текущий utils.py лучше поймет первый или второй вариант):
-# CAFE_SCHEDULE = {
-#    'alldays': {'open': '09:00', 'close': '20:00'}
-# }
-# Я оставил первый вариант с weekdays, saturday, sunday, так как он наиболее совместим с текущей логикой utils.py
 
-DEFAULT_TIMEZONE = 'Asia/Makassar' # Убедитесь, что это ваш правильный часовой пояс
-
+DEFAULT_TIMEZONE = 'Asia/Makassar'
 WELCOME_IMAGE_PATH = 'welcome_image.png'
 SERVICE_ACCOUNT_FILE = 'service_account.json'
-SPREADSHEET_ID = '1UZQfBRBffjpNHB3CDpJVEBEOU94482AouUOG-1kp94A'
 
 TEXTS = {
     "cafe_closed_can_preorder": "К сожалению, кафе сейчас закрыто.\nХотите оформить заказ сейчас? Мы примем его и обработаем, как только начнем работать.",
@@ -53,4 +40,5 @@ TEXTS = {
         "Message:\n{feedback_message}"
     )
 }
+
 print("Конфигурация загружена (config.py)")
