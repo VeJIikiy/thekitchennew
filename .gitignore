@@ -29,3 +29,4 @@ service_account.json
 # Файлы операционной системы
 .DS_Store # для macOS
 Thumbs.db # для Windows
+.env
