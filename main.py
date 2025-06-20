@@ -1,13 +1,13 @@
-# main.py (ФИНАЛЬНАЯ ДИАГНОСТИКА)
+# main.py (с СЕКРЕТНОЙ СТРАНИЦЕЙ ДЛЯ ПРОВЕРКИ ВЕБХУКА)
 
 import os
 import telebot
 from flask import Flask, request
 import logging
 import time
-from datetime import datetime # Добавили импорт datetime
+from datetime import datetime
 
-# Настраиваем логгирование
+# Настройка логгирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -17,48 +17,48 @@ from bot_instance import bot
 from config import TOKEN
 import message_handlers
 
-# Создаем путь для вебхука
+# Установка вебхука при старте (остается без изменений)
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
 APP_URL = os.environ.get("RENDER_EXTERNAL_URL")
-
-# Устанавливаем вебхук
 if APP_URL:
     WEBHOOK_URL = f"{APP_URL}{WEBHOOK_PATH}"
     bot.remove_webhook()
     bot.set_webhook(url=WEBHOOK_URL)
     logging.info(f"Webhook УСТАНОВЛЕН на: {WEBHOOK_URL}")
 
-    # --- НАЧАЛО ДИАГНОСТИЧЕСКОГО КОДА ---
-    time.sleep(2) # Даем Telegram пару секунд на обработку
-    try:
-        webhook_info = bot.get_webhook_info()
-        logging.info("---!!! ИНФОРМАЦИЯ О ВЕБХУКЕ ОТ TELEGRAM !!!---")
-        logging.info(f"URL, который видит Telegram: {webhook_info.url}")
-        logging.info(f"Количество ожидающих сообщений: {webhook_info.pending_update_count}")
-        if webhook_info.last_error_date:
-            logging.error(f"Дата последней ошибки: {datetime.fromtimestamp(webhook_info.last_error_date)}")
-            logging.error(f"Сообщение последней ошибки: {webhook_info.last_error_message}")
-        else:
-            logging.info("Последних ошибок доставки нет.")
-        logging.info("---!!! КОНЕЦ ИНФОРМАЦИИ !!!---")
-    except Exception as e:
-        logging.exception("!!! НЕ УДАЛОСЬ ПОЛУЧИТЬ ИНФОРМАЦИЮ О ВЕБХУКЕ !!!")
-    # --- КОНЕЦ ДИАГНОСТИЧЕСКОГО КОДА ---
-
-else:
-    logging.warning("RENDER_EXTERNAL_URL не найден, вебхук не установлен.")
-
-
 app = Flask(__name__)
 
+# Обработчик запросов от Telegram (остается без изменений)
 @app.route(WEBHOOK_PATH, methods=['POST'])
 def webhook_handler():
-    #... (остальной код остается без изменений)
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
     return '', 200
 
+# --- НАЧАЛО НОВОГО ДИАГНОСТИЧЕСКОГО КОДА ---
+# Этот секретный адрес будет в реальном времени показывать текущий статус вебхука
+@app.route('/get_webhook_status_debug_12345')
+def get_webhook_status_route():
+    try:
+        webhook_info = bot.get_webhook_info()
+        info_str = (
+            "---!!! РУЧНАЯ ПРОВЕРКА СТАТУСА ВЕБХУКА !!!---\n"
+            f"URL: {webhook_info.url}\n"
+            f"Ожидающие обновления: {webhook_info.pending_update_count}\n"
+            f"Дата последней ошибки: {datetime.fromtimestamp(webhook_info.last_error_date) if webhook_info.last_error_date else 'Ошибок не было'}\n"
+            f"Сообщение последней ошибки: {webhook_info.last_error_message}\n"
+            "---!!! КОНЕЦ ИНФОРМАЦИИ !!!---"
+        )
+        logging.info(info_str)
+        # Возвращаем информацию прямо в браузер для удобства
+        return f"<pre>{info_str}</pre>", 200
+    except Exception as e:
+        logging.exception("!!! НЕ УДАЛОСЬ ПОЛУЧИТЬ ИНФОРМАЦИЮ О ВЕБХУКЕ (РУЧНАЯ ПРОВЕРКА) !!!")
+        return "Ошибка получения информации о вебхуке.", 500
+# --- КОНЕЦ НОВОГО ДИАГНОСТИЧЕСКОГО КОДА ---
+
+# Служебный роут (остается без изменений)
 @app.route('/')
 def index():
     return "Bot is running!", 200
