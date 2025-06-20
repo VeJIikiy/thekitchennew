@@ -1,58 +1,47 @@
-# main.py - Финальная версия для деплоя на Render
+# main.py - ФИНАЛЬНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
 
 import os
-import telebot  # Убедитесь, что telebot импортирован
+import telebot
 from flask import Flask, request
 
-# Импортируем экземпляр бота и токен
 from bot_instance import bot
-from config import TOKEN  # Предполагается, что TOKEN - это строка с вашим токеном
-
-# Импортируем message_handlers.
-# Этот файл должен сам импортировать client_handlers и admin_handlers,
-# чтобы все декорированные функции (@bot.message_handler) были зарегистрированы.
+from config import TOKEN
 import message_handlers
 
-# --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+# --- НАЧАЛО ФИНАЛЬНОГО ИСПРАВЛЕНИЯ ---
 
-# Получаем адрес нашего приложения на Render
+# 1. Создаем простой и стандартный, но все еще секретный путь для вебхука.
+#    Это более надежно, чем использовать токен напрямую в URL.
+WEBHOOK_PATH = f"/webhook/{TOKEN}"
+
 APP_URL = os.environ.get("RENDER_EXTERNAL_URL")
 
-# Если мы работаем на Render (адрес существует), то устанавливаем вебхук
 if APP_URL:
-    # Собираем полный URL для вебхука
-    WEBHOOK_URL = f"{APP_URL}/{TOKEN}"
+    # 2. Собираем полный URL с новым путем
+    WEBHOOK_URL = f"{APP_URL}{WEBHOOK_PATH}"
 
-    # Удаляем старый вебхук (на всякий случай)
+    # Устанавливаем вебхук
     bot.remove_webhook()
-
-    # Устанавливаем новый вебхук
     bot.set_webhook(url=WEBHOOK_URL)
 
-    print(f"Webhook установлен на: {WEBHOOK_URL}")  # Это сообщение вы увидите в логах Render
+    print(f"ФИНАЛЬНАЯ ПРОВЕРКА: Webhook установлен на: {WEBHOOK_URL}")
 else:
-    print("Не удалось найти RENDER_EXTERNAL_URL, вебхук не установлен (возможно, локальный запуск).")
+    print("Не удалось найти RENDER_EXTERNAL_URL, вебхук не установлен.")
 
-# --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+# --- КОНЕЦ ФИНАЛЬНОГО ИСПРАВЛЕНИЯ ---
 
-
-# Создаем экземпляр веб-приложения Flask
 app = Flask(__name__)
 
 
-# --- Основной роут для приема вебхуков от Telegram ---
-# Telegram будет отправлять обновления сюда
-@app.route('/' + TOKEN, methods=['POST'])
+# 3. Указываем наш новый путь в обработчике Flask
+@app.route(WEBHOOK_PATH, methods=['POST'])
 def webhook_handler():
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
-        # Передаем обновление в библиотеку telebot для обработки
         bot.process_new_updates([update])
-        # Отвечаем Telegram, что все в порядке
         return '', 200
     else:
-        # Если пришел запрос другого типа, возвращаем ошибку
         return 'Unsupported Media Type', 415
 
 
@@ -63,6 +52,5 @@ def index():
 
 
 if __name__ == "__main__":
-    # Render сам задаст нужный порт через переменную окружения PORT
     port = int(os.environ.get('PORT', 5000))
     app.run(host="0.0.0.0", port=port)
